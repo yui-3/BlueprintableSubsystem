@@ -11,6 +11,8 @@ class FBlueprintableSubsystemModule : public IModuleInterface
 	TWeakPtr<SNotificationItem> NotificationPtr;
 
 public:
+	FSimpleDelegate OnRestartNotificationClickedDelegate;
+
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;

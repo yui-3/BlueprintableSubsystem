@@ -24,4 +24,16 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="Initialize")
 	void BP_Initialize();
+
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+
+	/** Override to control if the Subsystem should be created at all.
+ 	* For example you could only have your system created on servers.
+ 	* It's important to note that if using this is becomes very important to null check whenever getting the Subsystem.
+ 	*
+ 	* Note: This function is called on the CDO prior to instances being created!
+ 	*
+ 	*/
+	UFUNCTION(BlueprintImplementableEvent)
+	bool BP_ShouldCreateSubsystem() const;
 };

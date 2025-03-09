@@ -17,3 +17,13 @@ UGameInstance* UBlueprintableGameInstanceSubsystem::BP_GetGameInstance() const
 {
 	return GetGameInstance();
 }
+
+bool UBlueprintableGameInstanceSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	if (GetClass()->IsFunctionImplementedInScript(
+		GET_FUNCTION_NAME_CHECKED(UBlueprintableGameInstanceSubsystem, BP_ShouldCreateSubsystem)))
+	{
+		return BP_ShouldCreateSubsystem();
+	}
+	return Super::ShouldCreateSubsystem(Outer);
+}

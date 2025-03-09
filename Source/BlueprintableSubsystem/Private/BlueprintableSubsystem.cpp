@@ -2,28 +2,27 @@
 
 #include "BlueprintableSubsystem.h"
 
-#include "BlueprintableGameInstanceSubsystem.h"
 #include "BlueprintSubsystemSettings.h"
-#include "UnrealEdMisc.h"
 #include "Developer/Settings/Public/ISettingsModule.h"
 #include "Developer/Settings/Public/ISettingsSection.h"
-#include "Developer/Settings/Public/ISettingsContainer.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "FBlueprintableSubsystemModule"
 
+
 bool FBlueprintableSubsystemModule::HandleBlueprintSubsystemSettingsSaved()
 {
 	UBlueprintSubsystemSettings* Settings = GetMutableDefault<UBlueprintSubsystemSettings>();
-	bool Resave = false;
 
-	// You can put any validation code in here and resave the settings in case an invalid
+	//add your validation here. by default, it will resave
+	bool Resave = true;
+
 	// value has been entered
-
 	if (Resave)
 	{
 		Settings->SaveConfig();
+		Settings->TryUpdateDefaultConfigFile();
 	}
 	if (!NotificationPtr.IsValid())
 	{
@@ -34,8 +33,7 @@ bool FBlueprintableSubsystemModule::HandleBlueprintSubsystemSettingsSaved()
 			FText::FromString("Restart"), FText::FromString("Restart Editor to apply changes"),
 			FSimpleDelegate::CreateLambda([&]()
 			{
-				FUnrealEdMisc::Get().RestartEditor(false);
-
+				OnRestartNotificationClickedDelegate.ExecuteIfBound();
 				NotificationPtr = nullptr;
 			})));
 		NotificationPtr = FSlateNotificationManager::Get().AddNotification(NotifyInfo);
@@ -48,21 +46,20 @@ bool FBlueprintableSubsystemModule::HandleBlueprintSubsystemSettingsSaved()
 	return true;
 }
 
+
 void FBlueprintableSubsystemModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		// Register the save handler to your settings, you might want to use it to
 		// validate those or just act to settings changes.
 		if (const auto SettingsSection = SettingsModule->RegisterSettings("Project", "Game", "Subsystems",
-		                                                                  NSLOCTEXT("YourModule",
+		                                                                  NSLOCTEXT("BlueprintableSubsystem",
 			                                                                  "BlueprintSubsystemSettingsName",
-			                                                                  "Blueprint GameInstance Subsystems"),
-		                                                                  NSLOCTEXT("YourModule",
+			                                                                  "Blueprintable Subsystem"),
+		                                                                  NSLOCTEXT("BlueprintableSubsystem",
 			                                                                  "BlueprintSubsystemSettingsDesc",
-			                                                                  "Add Blueprint Subsystems"),
+			                                                                  "Configure Blueprintable Subsystems"),
 		                                                                  GetMutableDefault<
 			                                                                  UBlueprintSubsystemSettings>());
 			SettingsSection.IsValid())
@@ -74,25 +71,22 @@ void FBlueprintableSubsystemModule::StartupModule()
 			UBlueprintSubsystemSettings* Settings = GetMutableDefault<UBlueprintSubsystemSettings>();
 			for (const auto& BlueprintSubsystem : Settings->BlueprintSubsystems)
 			{
-				if (!IsValid(BlueprintSubsystem)) continue;
+				if (!IsValid(BlueprintSubsystem.LoadSynchronous())) continue;
 				const auto LoadObject = StaticLoadObject(BlueprintSubsystem->StaticClass(),
 				                                         nullptr, *BlueprintSubsystem->GetPathName());
 				UE_LOG(LogTemp, Warning, TEXT("Load Blueprint Derived GameInstance Subsystem: %s"),
 				       *LoadObject->GetName());
 			}
 			TArray<int32> Indexes;
+
 			// find invalid entries
-			for (int i = 0; i < Settings->BlueprintSubsystems.Num(); ++i)
+			for (int i = Settings->BlueprintSubsystems.Num() - 1; i >= 0; --i)
 			{
-				if (!IsValid(Settings->BlueprintSubsystems[i]))
+				if (!IsValid(Settings->BlueprintSubsystems[i].LoadSynchronous()))
 				{
-					Indexes.Add(i);
+					//remove invalid entries from settings
+					Settings->BlueprintSubsystems.RemoveAt(i);
 				}
-			}
-			//remove invalid entries from settings
-			for (const auto Index : Indexes)
-			{
-				Settings->BlueprintSubsystems.RemoveAt(Index);
 			}
 		}
 	}
@@ -100,9 +94,7 @@ void FBlueprintableSubsystemModule::StartupModule()
 
 void FBlueprintableSubsystemModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
-
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		SettingsModule->UnregisterSettings("Project", "Game", "Subsystems");

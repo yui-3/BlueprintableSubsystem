@@ -19,7 +19,7 @@ public class BlueprintableSubsystemEditor : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore", "EditorScriptingUtilities", "Blutility", "BlueprintableSubsystem", "UnrealEd"
+				"SlateCore", "EditorScriptingUtilities", "Blutility", "BlueprintableSubsystem","UnrealEd"
 			}
 		);
 	}

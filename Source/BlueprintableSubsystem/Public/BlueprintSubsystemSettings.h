@@ -17,5 +17,5 @@ class BLUEPRINTABLESUBSYSTEM_API UBlueprintSubsystemSettings : public UObject
 
 public:
 	UPROPERTY(Config, EditAnywhere)
-	TArray<TSubclassOf<UBlueprintableGameInstanceSubsystem>> BlueprintSubsystems;
+	TArray<TSoftClassPtr<USubsystem>> BlueprintSubsystems;
 };

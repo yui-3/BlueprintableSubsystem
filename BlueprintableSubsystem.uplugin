@@ -22,7 +22,7 @@
         {
             "Name": "BlueprintableSubsystemEditor",
             "Type": "Editor",
-            "LoadingPhase": "PreDefault"
+            "LoadingPhase": "Default"
         }
     ]
 }
